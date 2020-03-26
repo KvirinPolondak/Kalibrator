@@ -107,6 +107,7 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 
+
 /* USER CODE END EXPORTED_FUNCTIONS */
 
 /**

@@ -54,6 +54,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void STATUS_LED_On(void);
+void STATUS_LED_Off(void);
 
 /* USER CODE END PFP */
 
@@ -99,6 +101,8 @@ int main(void)
   uint8_t data[1];
   HAL_UART_Receive_IT(&huart1, data, 1);
 
+  uint8_t hello_world[] = "Hello world\n";
+
   /* USER CODE END 2 */
  
  
@@ -110,7 +114,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  	C
+  	if (CDC_Transmit_FS(hello_world, 13) != USBD_OK) {
+  		STATUS_LED_On();
+  	} else {
+  		STATUS_LED_Off();
+  	}
+
+  	HAL_Delay(1000);
+
   }
   /* USER CODE END 3 */
 }
@@ -160,6 +171,19 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void STATUS_LED_On(void) {
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+	return;
+}
+
+
+void STATUS_LED_Off(void) {
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+
+	return;
+}
+
 
 /* USER CODE END 4 */
 
