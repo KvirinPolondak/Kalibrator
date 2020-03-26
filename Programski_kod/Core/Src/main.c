@@ -27,6 +27,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
+
 #include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
@@ -56,6 +58,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void STATUS_LED_On(void);
 void STATUS_LED_Off(void);
+void STATUS_LED_Toggle(void);
 
 /* USER CODE END PFP */
 
@@ -101,8 +104,6 @@ int main(void)
   uint8_t data[1];
   HAL_UART_Receive_IT(&huart1, data, 1);
 
-  uint8_t hello_world[] = "Hello world\n";
-
   /* USER CODE END 2 */
  
  
@@ -114,13 +115,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  	if (CDC_Transmit_FS(hello_world, 13) != USBD_OK) {
-  		STATUS_LED_On();
-  	} else {
-  		STATUS_LED_Off();
-  	}
-
-  	HAL_Delay(1000);
 
   }
   /* USER CODE END 3 */
@@ -171,6 +165,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+/* Turn on Status LED */
 void STATUS_LED_On(void) {
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
@@ -178,10 +173,46 @@ void STATUS_LED_On(void) {
 }
 
 
+/* Turn off Status LED */
 void STATUS_LED_Off(void) {
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 
 	return;
+}
+
+
+/* Toggle Status LED */
+void STATUS_LED_Toggle(void) {
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+
+	return;
+}
+
+
+/* This Callback function is called when data from USB is received */
+void CDC_ReceiveCallback_FS(uint8_t* Buf, uint32_t Len) {
+
+	if (memcmp(Buf, "LEDON", 5) == 0) {
+		STATUS_LED_On();
+
+	} else if (memcmp(Buf, "LEDOFF", 6) == 0) {
+		STATUS_LED_Off();
+
+	} else {
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+	}
+
 }
 
 
