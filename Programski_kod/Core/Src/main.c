@@ -28,6 +28,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include <math.h>
+#include <ctype.h>
 
 #include "usbd_cdc_if.h"
 
@@ -50,6 +52,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t UART_Rx_buff[10];
+int UART_Rx_pointer = 0;
+
 
 /* USER CODE END PV */
 
@@ -59,6 +64,8 @@ void SystemClock_Config(void);
 void STATUS_LED_On(void);
 void STATUS_LED_Off(void);
 void STATUS_LED_Toggle(void);
+int Command_Callback(uint8_t *cmd_in, uint32_t length);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 
 /* USER CODE END PFP */
 
@@ -101,8 +108,9 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t data[1];
-  HAL_UART_Receive_IT(&huart1, data, 1);
+
+  STATUS_LED_On();
+  HAL_UART_Receive_IT(&huart1, UART_Rx_buff, 1);
 
   /* USER CODE END 2 */
  
@@ -191,29 +199,179 @@ void STATUS_LED_Toggle(void) {
 
 /* This Callback function is called when data from USB is received */
 void CDC_ReceiveCallback_FS(uint8_t* Buf, uint32_t Len) {
-
-	if (memcmp(Buf, "LEDON", 5) == 0) {
-		STATUS_LED_On();
-
-	} else if (memcmp(Buf, "LEDOFF", 6) == 0) {
-		STATUS_LED_Off();
-
-	} else {
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-	}
+	Command_Callback(Buf, Len);
 
 }
+
+
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	if (huart->Instance == USART1) {
+		if (UART_Rx_pointer < 9) {
+			UART_Rx_pointer++;
+
+		} else {
+			Command_Callback(UART_Rx_buff, 10);
+
+			UART_Rx_pointer = 0;
+		}
+
+		HAL_UART_Receive_IT(huart, &UART_Rx_buff[UART_Rx_pointer], 1);
+	}
+
+	return;
+}
+
+
+
+int Command_Callback(uint8_t *cmd_in, uint32_t length) {
+	int led_id;
+	uint16_t led_val;
+	uint8_t dac_data[3];
+
+	/* cmd_in = LED_XX_ZZZ */
+
+	if (length < 10) {
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+
+		return -1; /* Failure: command too short */
+	}
+
+	/* Check if command has defined structure */
+	if (cmd_in[0] != 'L' 		  ||
+			cmd_in[1] != 'E' 			||
+			cmd_in[2] != 'D' 			||
+			cmd_in[3] != '_' 		 	||
+			! isdigit(cmd_in[4]) 	||
+			! isdigit(cmd_in[5]) 	||
+			cmd_in[6] != '_' 		 	||
+			! isdigit(cmd_in[7]) 	||
+			! isdigit(cmd_in[8]) 	||
+			! isdigit(cmd_in[9])
+		) {
+		return -1;	/* Failure: wrong command */
+	}
+
+	/* String to int and string to float */
+	led_id = (cmd_in[4] - '0') * 10 + (cmd_in[5] - '0');
+
+	led_val = 	100 * (cmd_in[7] - '0')  +
+							10  * (cmd_in[8] - '0')  +
+							1   * (cmd_in[9] - '0');
+
+	if (led_val > 255) {
+		led_val = 255;
+	}
+
+	if (led_id >= 20) {
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+		HAL_Delay(100);
+		STATUS_LED_Toggle();
+
+		return -1; /* Failure: not so many LEDs available */
+	}
+
+	dac_data[0] = 0b00010000;				/* control byte */
+	dac_data[1] = led_val;					/* msb byte */
+	dac_data[2] = 0b00000000;				/* lsb byte (dont care byte) */
+
+	switch (led_id) {
+	case 0:
+		dac_data[0] = 0b00010000;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 1:
+		dac_data[0] = 0b00010010;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 2:
+		dac_data[0] = 0b00010100;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 3:
+		dac_data[0] = 0b00010110;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 4:
+		dac_data[0] = 0b00010000;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
+		break;
+	case 5:
+		dac_data[0] = 0b00010010;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
+		break;
+	case 6:
+		dac_data[0] = 0b00010100;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
+		break;
+	case 7:
+		dac_data[0] = 0b00010110;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
+		break;
+	case 8:
+		dac_data[0] = 0b00010000;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
+		break;
+	case 9:
+		dac_data[0] = 0b00010010;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
+		break;
+	case 10:
+		dac_data[0] = 0b00010100;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
+		break;
+	case 11:
+		dac_data[0] = 0b00010110;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
+		break;
+	case 12:
+		dac_data[0] = 0b00010000;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
+		break;
+	case 13:
+		dac_data[0] = 0b00010010;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
+		break;
+	case 14:
+		dac_data[0] = 0b00010100;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
+		break;
+	case 15:
+		dac_data[0] = 0b00010110;
+		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
+		break;
+	case 16:
+		dac_data[0] = 0b00010000;
+		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 17:
+		dac_data[0] = 0b00010010;
+		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 18:
+		dac_data[0] = 0b00010100;
+		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	case 19:
+		dac_data[0] = 0b00010110;
+		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
+		break;
+	}
+
+	return 0;
+}
+
+
 
 
 /* USER CODE END 4 */
