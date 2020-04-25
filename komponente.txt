@@ -94,3 +94,6 @@ Fuse Holder za oba
 
 230 konektor
 	- https://www.mouser.com/ProductDetail/TE-Connectivity/282834-2?qs=sGAEpiMZZMvZTcaMAxB2AJ%2F79sE4hFAYo1Yb6cyIxXA%3D
+
+USB
+	- https://www.mouser.com/ProductDetail/Amphenol-FCI/61729-1011BLF?qs=%2Fha2pyFadujAd9JxxQ3uwcChnZqwNNMfYs4mO8y6Dw2B%2FhgrnRBUww%3D%3D
