@@ -1,0 +1,96 @@
+Pad napona na ledici dok vodi na 50mA (raznih valnih duljina) od 1 V do 6 V
+
+Otpornik za mjerenje struje je 100 ohma.
+
+Napon napajanja LEDica i OPAMPa je 12V.
+
+MOSFET je 2N7000
+	- https://hr.mouser.com/datasheet/2/308/NDS7002A-D-1522662.pdf
+	- https://hr.mouser.com/ProductDetail/ON-Semiconductor/2N7000?qs=sGAEpiMZZMshyDBzk1%2FWi9bHELEahoDnY1fyKF6A6Ko%3D
+
+Snaga napajanja za LEDice i drajvere LEDica je 15W
+	- cca 20 LEDica svaka po 50mA = 1A
+	- 12V napajanje
+	- 12V * 1A = 12 W
+	- ukupno cca 15 W
+
+Snaga napajanja za Mikrice i DACove je 1W.
+	- mikric trosi cca 20mA
+	- Bluetooth modul cca 100ma
+	- Ukupno max cca 200mA
+	- 3.3V * 200mA = 0.66W
+	- Ukupno cca 1W napajanje
+
+Transformator za LEDice
+	- primar 230 V
+	- sekundar 12 V
+	- struja sekundara 1.25 A
+	- snaga transformatora 15 VA i više
+	- za sada odabrani: 
+		- 919-RAC15-12SK , 15W, 9.84eura (ovih trenutno nema na zalihama)
+		- 709-IRM15-12, 15W, 8.82 eura
+	- trebat ce na ulazu imati osigurac (Cartridge Fuses) i Fuse Clips, 230V
+	- trebat ce na ulazu imati Inrush Current Limiter (varistor)
+	- na izlazu bi trebalo staviti elektrolitski kondenzator 47uF i keramicki od 0.1uF, oba 15V i vise.
+
+Transformator za mikric
+	- primar 230 V
+	- sekundar 6 V
+	- struja sekundara 200mA
+	- 1 VA
+	- za sada odabrani:
+		- 919-RAC02-09SC , 2W, 12 eura
+		- 919-RAC04-09SGA, 4W, 8.33 eura
+		- 709-IRM01-9, 1W, 5.18 eura
+		- 709-IRM02-9, 2W, 5.35 eura
+		- 709-IRM03-9, 3W, 5.68 eura
+	- trebat ce na ulazu imati osigurac (Cartridge Fuses) i Fuse Clips, 230V
+	- trebat ce na ulazu imati Inrush Current Limiter (varistor)
+	- na izlazu bi trebalo staviti elektrolitski kondenzator 47uF i keramicki od 0.1uF, oba 9V i vise.
+
+Oscilatori
+	- treba vidjet koji oscilatori su za USB
+	- uzet oscilatore
+	- uz njih stavit odgovarajuce oscilatore
+	- na Bluepillu je 8.0MHz oscilator
+	- na mouseru treba traziti: "Radial 8 MHz Crystals"
+
+
+IRM-03-09
+	- inrush current = 20A at 230V
+	- AC current(Typ.) = 40mA at 230V
+	- efficiency = 77%
+	- power = 3W at 77% efficiency
+	- power at 100% load = 3W * 1.23 = 3.69W
+	- input current = 3.69/220V = 17mA
+
+IRM-15-12
+	- inrush current = 40A at 230V
+	- AC current(Typ.) = 0.2A at 230V
+	- efficiency = 82%
+	- power = 15W at 82% efficiency
+	- power at 100% load = 15W * 1.18 = 17.7W
+	- input current = 17.7/220V = 81mA
+	
+NTC thermistor za IRM-03-09
+	- Imax = > 17mA
+	- Max surge rating = 20*0.5 = 10A
+	- https://www.mouser.com/ProductDetail/Ametherm/SL15-16004?qs=sGAEpiMZZMuqZeNK75brDxRgT1KUh2F4yl8yZ2580%2F4%3D
+
+NTC thermistor za IRM-15-12
+	- Imax = > 81mA
+	- Max surge rating = 40*0.5 = 20A
+	- https://www.mouser.com/ProductDetail/EPCOS-TDK/B57235S0809M054?qs=sGAEpiMZZMuqZeNK75brD4NbkuyqInSBUO1bsVDr1pU%3D
+
+Fuse za IRM-15-12
+	- https://www.mouser.com/ProductDetail/Schurter/80200608H?qs=sGAEpiMZZMtxU2g%2F1juGqYtHxMJCPXxlSD4GsjE%2F89kfPA7LdmyR1Q%3D%3D
+
+Fuse za IRM-03-09
+	- https://www.mouser.com/ProductDetail/Schurter/80200605H?qs=sGAEpiMZZMtxU2g%2F1juGqYtHxMJCPXxltnOP0KJXWrXRs5HLe%2F4kjw%3D%3D
+
+Fuse Holder za oba 
+	- https://www.mouser.com/ProductDetail/Schurter/07510056?qs=sGAEpiMZZMuG%252BgnN5hGYG64gSWRywnnaY4FCrN26%252BJI%3D
+
+
+230 konektor
+	- https://www.mouser.com/ProductDetail/TE-Connectivity/282834-2?qs=sGAEpiMZZMvZTcaMAxB2AJ%2F79sE4hFAYo1Yb6cyIxXA%3D
