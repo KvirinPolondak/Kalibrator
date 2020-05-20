@@ -42,6 +42,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define VALID_COMMAND_LENGTH 10
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,6 +56,8 @@
 uint8_t UART_Rx_buff[10];
 int UART_Rx_pointer = 0;
 
+uint8_t command_buffer[50];
+int command_received = 0;
 
 /* USER CODE END PV */
 
@@ -109,11 +112,19 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  STATUS_LED_On();
   HAL_UART_Receive_IT(&huart1, UART_Rx_buff, 1);
 
+  /* Signal to show we're online */
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+
   /* USER CODE END 2 */
- 
  
 
   /* Infinite loop */
@@ -123,6 +134,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+  	/* Check if command was received */
+  	if (command_received) {
+  		Command_Callback(command_buffer, VALID_COMMAND_LENGTH);
+
+  		/* reset the flag */
+  		command_received = 0;
+  	}
 
   }
   /* USER CODE END 3 */
@@ -197,6 +216,40 @@ void STATUS_LED_Toggle(void) {
 }
 
 
+/* Status LED blink Success */
+void STATUS_LED_Blink_Success(void) {
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+}
+
+
+/* Status LED blink Failure */
+void STATUS_LED_Blink_Failure(void) {
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+	STATUS_LED_On();
+	HAL_Delay(100);
+	STATUS_LED_Off();
+	HAL_Delay(100);
+}
+
+
 /* This Callback function is called when data from USB is received */
 void CDC_ReceiveCallback_FS(uint8_t* Buf, uint32_t Len) {
 	Command_Callback(Buf, Len);
@@ -223,68 +276,72 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 
+int Command_extract_info(uint8_t *string, uint32_t length, uint32_t *led_id, uint32_t *led_val) {
+		if (length < 10) {
+			return -1; /* Failure: command too short */
+		}
+
+		/* Check if command has defined structure */
+		if (string[0] != 'L' 		  ||
+				string[1] != 'E' 			||
+				string[2] != 'D' 			||
+				string[3] != '_' 		 	||
+				! isdigit(string[4]) 	||
+				! isdigit(string[5]) 	||
+				string[6] != '_' 		 	||
+				! isdigit(string[7]) 	||
+				! isdigit(string[8]) 	||
+				! isdigit(string[9])
+			) {
+
+			return -1;	/* Failure: wrong command */
+		}
+
+		/* String to led id (int) */
+		*led_id = (string[4] - '0') * 10 + (string[5] - '0');
+
+		/* String to led current (int)*/
+		*led_val = 	100 * (string[7] - '0')  +
+								10  * (string[8] - '0')  +
+								1   * (string[9] - '0');
+
+		/* Set upper bound on LED current value */
+		if (*led_val > 255) {
+			*led_val = 255;
+		}
+
+		/* Set upper bound on LEDs */
+		if (*led_id >= 20) {
+
+			return -1; /* Failure: not so many LEDs available */
+		}
+
+
+		/* return Success */
+		return 0;
+}
+
+
 
 int Command_Callback(uint8_t *cmd_in, uint32_t length) {
-	int led_id;
-	uint16_t led_val;
+	uint32_t led_id;
+	uint32_t led_val;
 	uint8_t dac_data[3];
 
-	/* cmd_in = LED_XX_ZZZ */
+	/* Command format = LED_XX_ZZZ */
 
-	if (length < 10) {
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-
-		return -1; /* Failure: command too short */
+	if (Command_extract_info(cmd_in, length, &led_id, &led_val) != 0) {
+		/* Failure: can't extract led_id and led_val from input command */
+		STATUS_LED_Blink_Failure();
+		return -1;
 	}
 
-	/* Check if command has defined structure */
-	if (cmd_in[0] != 'L' 		  ||
-			cmd_in[1] != 'E' 			||
-			cmd_in[2] != 'D' 			||
-			cmd_in[3] != '_' 		 	||
-			! isdigit(cmd_in[4]) 	||
-			! isdigit(cmd_in[5]) 	||
-			cmd_in[6] != '_' 		 	||
-			! isdigit(cmd_in[7]) 	||
-			! isdigit(cmd_in[8]) 	||
-			! isdigit(cmd_in[9])
-		) {
-		return -1;	/* Failure: wrong command */
-	}
-
-	/* String to int and string to float */
-	led_id = (cmd_in[4] - '0') * 10 + (cmd_in[5] - '0');
-
-	led_val = 	100 * (cmd_in[7] - '0')  +
-							10  * (cmd_in[8] - '0')  +
-							1   * (cmd_in[9] - '0');
-
-	if (led_val > 255) {
-		led_val = 255;
-	}
-
-	if (led_id >= 20) {
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-		HAL_Delay(100);
-		STATUS_LED_Toggle();
-
-		return -1; /* Failure: not so many LEDs available */
-	}
-
+	/* DAC data setup */
 	dac_data[0] = 0b00010000;				/* control byte */
 	dac_data[1] = led_val;					/* msb byte */
 	dac_data[2] = 0b00000000;				/* lsb byte (dont care byte) */
 
+	/* Based on LED Id send command to certain DAC (one of four available) */
 	switch (led_id) {
 	case 0:
 		dac_data[0] = 0b00010000;
@@ -368,6 +425,8 @@ int Command_Callback(uint8_t *cmd_in, uint32_t length) {
 		break;
 	}
 
+	/* Return Success */
+	STATUS_LED_Blink_Success();
 	return 0;
 }
 

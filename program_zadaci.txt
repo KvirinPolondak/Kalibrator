@@ -1,0 +1,14 @@
+Treba implementirati statusnu ledicu tako da:
+  - dok je god uredaj upaljen treba treperiti ledica odredenom brzinom. Najbolje je toggle ledice svake 0.5 sekunde. Ovo najbolje implementirati tajmerom koji samo broji i OCR jedinicom.
+  - ako je dana kriva komanda onda treba ledicu togglati 3 puta sa periodom od cca 100 ms. Ovo najbolje implementirati sa tajmerom sa Impulse response i repetativnim registrom.
+  - ako je dana tocna komanda onda treba ledicu togglati 1 puta sa periodom od cca 100 ms. Ovo najbolje implementirati sa tajmerom sa Impulse response i repetativnim registrom.
+  - Sve ovo gore mora ici preko interupta zato što mora nesmetano raditi u pozadini.
+
+Treba implementirati UART komunikaciju tako da:
+  - prima preko interupta znak po znak i svaki puta reseta timer. Ako nakon posljednjeg znaka prodje odredjen vremenski period (npr 10 ms) onda treba podatke u bufferu proglasit primljenim. 
+  - vremenski period mjeriti tajmerom. Postaviti tajmer da broji a na svaki primljeni znak povecati trenutnu vrijednost brojaca za npr 10 ms. Ako dodje do OCRa onda to znaci da je proslo od zadnjeg znaka npr 10 ms. To se moze implemetirati i sa novim tajmerom i onda na svaki znak resetirati brojac na 0 ali zasto bi se koristio novi tajmer ako se moze iskoristiti vec postojeci OCR tajmer kojeg vec koristimo.
+  - Postaviti zastavicu da je poruka primljena
+  - Ako je broj znakova premali onda treba postaviti brojac znakova na nulu, resetirati buffer i ponovo cekati novi znak. Ako je broj znakova u bufferu zadovoljavajuci onda treba to proglasiti porukom i poslati je na parsiranje. Nakon parsiranja postaviti brojac znakova na nulu i resetirati buffer i ponovo cekati novi znak.
+
+Komande:
+  - komande provjeravati u main beskonacnoj petlji preko nekog flaga. 
