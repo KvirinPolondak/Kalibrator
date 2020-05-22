@@ -53,11 +53,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t UART_Rx_buff[10];
-int UART_Rx_pointer = 0;
-
-uint8_t command_buffer[50];
-int command_received = 0;
+volatile uint8_t command_buffer[50] = {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0'};
+volatile int command_buffer_pointer = 0;
+volatile int command_received = 0;
 
 /* USER CODE END PV */
 
@@ -112,7 +110,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_UART_Receive_IT(&huart1, UART_Rx_buff, 1);
+  HAL_UART_Receive_IT(&huart1, command_buffer, 1);
 
   /* Signal to show we're online */
 	STATUS_LED_On();
@@ -126,6 +124,7 @@ int main(void)
 
   /* USER CODE END 2 */
  
+ 
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -137,10 +136,14 @@ int main(void)
 
   	/* Check if command was received */
   	if (command_received) {
-  		Command_Callback(command_buffer, VALID_COMMAND_LENGTH);
+  		Command_Callback(command_buffer, command_buffer_pointer);
 
   		/* reset the flag */
   		command_received = 0;
+
+  		/* reset the buffer */
+  		command_buffer_pointer = 0;
+  		memset(command_buffer, '0', VALID_COMMAND_LENGTH);
   	}
 
   }
@@ -252,24 +255,40 @@ void STATUS_LED_Blink_Failure(void) {
 
 /* This Callback function is called when data from USB is received */
 void CDC_ReceiveCallback_FS(uint8_t* Buf, uint32_t Len) {
-	Command_Callback(Buf, Len);
-
+	/* Set the flag only if we recieved valid number of chars */
+	if (Len == VALID_COMMAND_LENGTH) {
+		memcpy(command_buffer, Buf, Len);
+		command_buffer_pointer = Len;
+		command_received = 1;
+	}
 }
 
 
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
-		if (UART_Rx_pointer < 9) {
-			UART_Rx_pointer++;
+		command_buffer_pointer++;
 
+		/* If the beginning of the command buffer is valid */
+		if (command_buffer[0] == 'L') {
+			/* Don't overrun buffer */
+			if (command_buffer_pointer < VALID_COMMAND_LENGTH) {
+
+				HAL_UART_Receive_IT(huart, command_buffer + command_buffer_pointer, 1);
+
+			/* If the buffer is full */
+			} else {
+				/* set the flag */
+				command_received = 1;
+
+				HAL_UART_Receive_IT(huart, command_buffer, 1);
+			}
+		/* if the beginning of the command buffer is invalid */
 		} else {
-			Command_Callback(UART_Rx_buff, 10);
-
-			UART_Rx_pointer = 0;
+			/* clear the buffer */
+			command_buffer_pointer = 0;
+			HAL_UART_Receive_IT(huart, command_buffer, 1);
 		}
-
-		HAL_UART_Receive_IT(huart, &UART_Rx_buff[UART_Rx_pointer], 1);
 	}
 
 	return;
