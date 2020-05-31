@@ -17,5 +17,15 @@ se kontrolirati preko USB sučelja ili preko BlueTooth sučelja.
 Demonstrirati korištenje razvijenog uređaja za mjerenje gamuta barem
 jedne digitalne kamere.
 
+## Complete documentation
+https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/main_documentation.pdf
+
 ## Pictures
+https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_1.png
+
+https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_2.png
+
+https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_3.png
+
+
 
