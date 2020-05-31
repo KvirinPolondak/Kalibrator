@@ -21,11 +21,11 @@ jedne digitalne kamere.
 https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/main_documentation.pdf
 
 ## Pictures
-![1]https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_1.png
+![1](https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_1.png?raw=true)
 
-![2]https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_2.png
+![2](https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_2.png?raw=true)
 
-![3]https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_3.png
+![3](https://github.com/KvirinPolondak/Kalibrator/blob/master/Dokumentacija/Screenshot_3.png?raw=true)
 
 
 
