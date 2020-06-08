@@ -1,0 +1,12 @@
+Output: NC Drill Files
+Type  : NC Drill
+From  : Project [Kalibracija.PrjPcb]
+   Generated File[Plocica_kalibrator.TXT]
+   Generated File[Plocica_kalibrator.LDP]
+   Generated File[Plocica_kalibrator.DRR]
+
+
+Files Generated   : 3
+Documents Printed : 0
+
+Finished Output Generation At 11:21:40 On 8.6.2020.

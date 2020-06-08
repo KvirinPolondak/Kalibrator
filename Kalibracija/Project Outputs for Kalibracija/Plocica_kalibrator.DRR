@@ -1,0 +1,22 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: Plocica_kalibrator.PcbDoc   8.6.2020.  11:21:39
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : Plocica_kalibrator.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      26mil (0.66mm)                                            Round             2         PTH        0.00inch (0.00mm)
+T2      28mil (0.711mm)                                           Round             105       PTH        0.00inch (0.00mm)
+T3      32mil (0.8mm)                                             Round             66        PTH        0.00inch (0.00mm)
+T4      35mil (0.899mm)                                           Round             68        PTH        0.00inch (0.00mm)
+T5      39mil (1.001mm)                                           Round             4         PTH        0.00inch (0.00mm)
+T6      41mil (1.039mm)                                           Round             4         PTH        0.00inch (0.00mm)
+T7      51mil (1.3mm)                                             Round             8         PTH        0.00inch (0.00mm)
+T8      94mil (2.38mm)                                            Round             2         PTH        0.00inch (0.00mm)
+T9      118mil (3mm)                                              Round             5         PTH        0.00inch (0.00mm)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              264
+
+Total Processing Time (hh:mm:ss) : 00:00:01
