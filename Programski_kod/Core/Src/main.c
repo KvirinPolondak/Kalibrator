@@ -82,6 +82,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	STATUS_LED_Off();
 
   /* USER CODE END 1 */
   
@@ -92,6 +93,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  HAL_Delay(100);
 
   /* USER CODE END Init */
 
@@ -114,13 +116,6 @@ int main(void)
 
   /* Signal to show we're online */
 	STATUS_LED_On();
-	HAL_Delay(100);
-	STATUS_LED_Off();
-	HAL_Delay(100);
-	STATUS_LED_On();
-	HAL_Delay(100);
-	STATUS_LED_Off();
-	HAL_Delay(100);
 
   /* USER CODE END 2 */
  
@@ -221,35 +216,28 @@ void STATUS_LED_Toggle(void) {
 
 /* Status LED blink Success */
 void STATUS_LED_Blink_Success(void) {
-	STATUS_LED_On();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_Off();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_On();
-	HAL_Delay(100);
-	STATUS_LED_Off();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
 }
 
 
 /* Status LED blink Failure */
 void STATUS_LED_Blink_Failure(void) {
-	STATUS_LED_On();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_Off();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_On();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_Off();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_On();
+	STATUS_LED_Toggle();
 	HAL_Delay(100);
-	STATUS_LED_Off();
-	HAL_Delay(100);
-	STATUS_LED_On();
-	HAL_Delay(100);
-	STATUS_LED_Off();
-	HAL_Delay(100);
+
 }
 
 
@@ -463,6 +451,11 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
 
+	while(1)
+	{
+		STATUS_LED_Toggle();
+		HAL_Delay(250);
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
