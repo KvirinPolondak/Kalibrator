@@ -197,7 +197,7 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 /* Turn on Status LED */
 void STATUS_LED_On(void) {
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 
 	return;
 }
@@ -205,7 +205,7 @@ void STATUS_LED_On(void) {
 
 /* Turn off Status LED */
 void STATUS_LED_Off(void) {
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
 	return;
 }
