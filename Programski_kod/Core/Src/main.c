@@ -22,7 +22,6 @@
 #include "main.h"
 #include "i2c.h"
 #include "usart.h"
-#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -31,7 +30,7 @@
 #include <math.h>
 #include <ctype.h>
 
-#include "usbd_cdc_if.h"
+//#include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
 
@@ -43,6 +42,21 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define VALID_COMMAND_LENGTH 10
+
+#define I2C_ADDR_D6 (0b01001100)
+#define I2C_ADDR_D5 (0b01001100)
+#define I2C_ADDR_D3 (0b01001111)
+#define I2C_ADDR_D2 (0b01001101)
+#define I2C_ADDR_D1 (0b01001110)
+
+#define I2C_CTRL_A (0b00010000)
+#define I2C_CTRL_B (0b00010010)
+#define I2C_CTRL_C (0b00010100)
+#define I2C_CTRL_D (0b00010110)
+
+#define I2C_PORT_1 (&hi2c1)
+#define I2C_PORT_2 (&hi2c2)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -109,7 +123,6 @@ int main(void)
   MX_I2C1_Init();
   MX_I2C2_Init();
   MX_USART1_UART_Init();
-  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart1, command_buffer, 1);
@@ -123,11 +136,33 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+	/* ENABLE INTERRUPTS */
+	__enable_irq();
+
+	uint8_t num = 0;
+	uint8_t str[] = "LED_00_200";
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  for(num=0; num<20; num++){
+		  str[7] = '2';
+		  str[8] = '0';
+		  str[9] = '0';
+
+		  str[4] = num / 10 + '0';
+	      str[5] = (num % 10) + '0';
+	      Command_Callback(str, 10);
+	      HAL_Delay(100);
+
+		  str[7] = '0';
+		  str[8] = '0';
+		  str[9] = '0';
+		  Command_Callback(str, 10);
+	  }
 
   	/* Check if command was received */
   	if (command_received) {
@@ -153,17 +188,15 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL15;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -177,13 +210,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
-  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -216,17 +243,22 @@ void STATUS_LED_Toggle(void) {
 
 /* Status LED blink Success */
 void STATUS_LED_Blink_Success(void) {
+	/*
 	STATUS_LED_Toggle();
 	HAL_Delay(100);
 	STATUS_LED_Toggle();
 	HAL_Delay(100);
 	STATUS_LED_Toggle();
 	HAL_Delay(100);
+	STATUS_LED_Toggle();
+	HAL_Delay(100);
+	*/
 }
 
 
 /* Status LED blink Failure */
 void STATUS_LED_Blink_Failure(void) {
+	/*
 	STATUS_LED_Toggle();
 	HAL_Delay(100);
 	STATUS_LED_Toggle();
@@ -237,6 +269,9 @@ void STATUS_LED_Blink_Failure(void) {
 	HAL_Delay(100);
 	STATUS_LED_Toggle();
 	HAL_Delay(100);
+	STATUS_LED_Toggle();
+	HAL_Delay(100);
+	*/
 
 }
 
@@ -344,93 +379,93 @@ int Command_Callback(uint8_t *cmd_in, uint32_t length) {
 	}
 
 	/* DAC data setup */
-	dac_data[0] = 0b00010000;				/* control byte */
-	dac_data[1] = led_val;					/* msb byte */
-	dac_data[2] = 0b00000000;				/* lsb byte (dont care byte) */
+		dac_data[0] = 0b00010000;				/* control byte */
+		dac_data[1] = led_val;					/* msb byte */
+		dac_data[2] = 0b00000000;				/* lsb byte (dont care byte) */
 
-	/* Based on LED Id send command to certain DAC (one of four available) */
-	switch (led_id) {
-	case 0:
-		dac_data[0] = 0b00010000;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 1:
-		dac_data[0] = 0b00010010;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 2:
-		dac_data[0] = 0b00010100;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 3:
-		dac_data[0] = 0b00010110;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 4:
-		dac_data[0] = 0b00010000;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
-		break;
-	case 5:
-		dac_data[0] = 0b00010010;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
-		break;
-	case 6:
-		dac_data[0] = 0b00010100;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
-		break;
-	case 7:
-		dac_data[0] = 0b00010110;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001101<<1, dac_data, 3, 100);
-		break;
-	case 8:
-		dac_data[0] = 0b00010000;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
-		break;
-	case 9:
-		dac_data[0] = 0b00010010;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
-		break;
-	case 10:
-		dac_data[0] = 0b00010100;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
-		break;
-	case 11:
-		dac_data[0] = 0b00010110;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001110<<1, dac_data, 3, 100);
-		break;
-	case 12:
-		dac_data[0] = 0b00010000;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
-		break;
-	case 13:
-		dac_data[0] = 0b00010010;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
-		break;
-	case 14:
-		dac_data[0] = 0b00010100;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
-		break;
-	case 15:
-		dac_data[0] = 0b00010110;
-		HAL_I2C_Master_Transmit(&hi2c1, 0b01001111<<1, dac_data, 3, 100);
-		break;
-	case 16:
-		dac_data[0] = 0b00010000;
-		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 17:
-		dac_data[0] = 0b00010010;
-		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 18:
-		dac_data[0] = 0b00010100;
-		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	case 19:
-		dac_data[0] = 0b00010110;
-		HAL_I2C_Master_Transmit(&hi2c2, 0b01001100<<1, dac_data, 3, 100);
-		break;
-	}
+		/* Based on LED Id send command to certain DAC (one of four available) */
+		switch (led_id) {
+		case 0:
+			dac_data[0] = I2C_CTRL_B;
+			HAL_I2C_Master_Transmit(I2C_PORT_1, I2C_ADDR_D6<<1, dac_data, 3, 100);
+			break;
+		case 1:
+			dac_data[0] = I2C_CTRL_C;
+			HAL_I2C_Master_Transmit(I2C_PORT_1, I2C_ADDR_D6<<1, dac_data, 3, 100);
+			break;
+		case 2:
+			dac_data[0] = I2C_CTRL_D;
+			HAL_I2C_Master_Transmit(I2C_PORT_1, I2C_ADDR_D6<<1, dac_data, 3, 100);
+			break;
+		case 3:
+			dac_data[0] = I2C_CTRL_A;
+			HAL_I2C_Master_Transmit(I2C_PORT_1, I2C_ADDR_D6<<1, dac_data, 3, 100);
+			break;
+		case 4:
+			dac_data[0] = I2C_CTRL_A;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D2<<1, dac_data, 3, 100);
+			break;
+		case 5:
+			dac_data[0] = I2C_CTRL_C;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D2<<1, dac_data, 3, 100);
+			break;
+		case 6:
+			dac_data[0] = I2C_CTRL_D;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D2<<1, dac_data, 3, 100);
+			break;
+		case 7:
+			dac_data[0] = I2C_CTRL_A;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D5<<1, dac_data, 3, 100);
+			break;
+		case 8:
+			dac_data[0] = I2C_CTRL_B;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D2<<1, dac_data, 3, 100);
+			break;
+		case 9:
+			dac_data[0] = I2C_CTRL_B;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D5<<1, dac_data, 3, 100);
+			break;
+		case 10:
+			dac_data[0] = I2C_CTRL_A;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D3<<1, dac_data, 3, 100);
+			break;
+		case 11:
+			dac_data[0] = I2C_CTRL_D;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D3<<1, dac_data, 3, 100);
+			break;
+		case 12:
+			dac_data[0] = I2C_CTRL_C;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D3<<1, dac_data, 3, 100);
+			break;
+		case 13:
+			dac_data[0] = I2C_CTRL_C;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D5<<1, dac_data, 3, 100);
+			break;
+		case 14:
+			dac_data[0] = I2C_CTRL_D;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D5<<1, dac_data, 3, 100);
+			break;
+		case 15:
+			dac_data[0] = I2C_CTRL_B;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D3<<1, dac_data, 3, 100);
+			break;
+		case 16:
+			dac_data[0] = I2C_CTRL_A;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D1<<1, dac_data, 3, 100);
+			break;
+		case 17:
+			dac_data[0] = I2C_CTRL_D;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D1<<1, dac_data, 3, 100);
+			break;
+		case 18:
+			dac_data[0] = I2C_CTRL_C;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D1<<1, dac_data, 3, 100);
+			break;
+		case 19:
+			dac_data[0] = I2C_CTRL_B;
+			HAL_I2C_Master_Transmit(I2C_PORT_2, I2C_ADDR_D1<<1, dac_data, 3, 100);
+			break;
+		}
 
 	/* Return Success */
 	STATUS_LED_Blink_Success();
@@ -451,11 +486,6 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
 
-	while(1)
-	{
-		STATUS_LED_Toggle();
-		HAL_Delay(250);
-	}
   /* USER CODE END Error_Handler_Debug */
 }
 
