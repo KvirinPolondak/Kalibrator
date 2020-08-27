@@ -141,13 +141,23 @@ int main(void) {
 	__enable_irq();
 
 	uint8_t num, val;
-	uint8_t str[] = "LED_00_200";
-	uint8_t matrix[4][5] = {{000, 255, 000, 255, 000},
-													{255, 000, 255, 000, 255},
-													{000, 255, 000, 255, 000},
-													{255, 000, 255, 000, 255}};
+	uint8_t str[] = "LED_00_000";
+	uint8_t matrix[4][5] = {{000, 127, 000, 127, 000},
+													{127, 000, 127, 000, 127},
+													{000, 127, 000, 127, 000},
+													{127, 000, 127, 000, 127}};
 
 	int i, j;
+
+#ifdef USER_TEST
+	/* init leds */
+	for (i = 0; i < 20; i++) {
+		str[4] = i / 10 + '0';
+		str[5] = (i % 10) + '0';
+
+		Command_Callback(str, 10);
+	}
+#endif /* USER_TEST */
 
 	while (1) {
 		/* USER CODE END WHILE */
@@ -155,25 +165,28 @@ int main(void) {
 		/* USER CODE BEGIN 3 */
 #ifdef USER_TEST
 		while (1) {
-			for (i = 0; i < 4; i++) {
-				for (j = 0; j < 5; j++) {
-					num = i * 5 + j;
+			for (i = 0; i < 20; i++) {
+				str[4] = i / 10 + '0';
+				str[5] = (i % 10) + '0';
 
-					str[4] = num / 10 + '0';
-					str[5] = (num % 10) + '0';
+				for (j = 0; j < 100; j++) {
+					str[7] = (j / 100) + '0';
+					str[8] = (j % 100 / 10) + '0';
+					str[9] = (j % 10) + '0';
 
-					str[7] = (matrix[i][j] / 100) + '0';
-					str[8] = (matrix[i][j] % 100 / 10) + '0';
-					str[9] = (matrix[i][j] % 10) + '0';
-
-					if(j%2==0)
-						matrix[i][j]++;
-					else
-						matrix[i][j]--;
+					HAL_Delay(4);
 
 					Command_Callback(str, 10);
+				}
 
-					HAL_Delay(5);
+				for (j = 100; j >= 0; j--) {
+					str[7] = (j / 100) + '0';
+					str[8] = (j % 100 / 10) + '0';
+					str[9] = (j % 10) + '0';
+
+					HAL_Delay(4);
+
+					Command_Callback(str, 10);
 				}
 			}
 		}
