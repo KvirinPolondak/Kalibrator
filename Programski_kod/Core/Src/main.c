@@ -142,10 +142,10 @@ int main(void) {
 
 	uint8_t num, val;
 	uint8_t str[] = "LED_00_200";
-	uint8_t matrix[4][5] = {{00, 10, 20, 30, 20},
-													{10, 20, 30, 20, 10},
-													{20, 30, 20, 10, 05},
-													{30, 20, 10, 05, 00}};
+	uint8_t matrix[4][5] = {{000, 255, 000, 255, 000},
+													{255, 000, 255, 000, 255},
+													{000, 255, 000, 255, 000},
+													{255, 000, 255, 000, 255}};
 
 	int i, j;
 
@@ -166,9 +166,14 @@ int main(void) {
 					str[8] = (matrix[i][j] % 100 / 10) + '0';
 					str[9] = (matrix[i][j] % 10) + '0';
 
-					matrix[i][j]++;
+					if(j%2==0)
+						matrix[i][j]++;
+					else
+						matrix[i][j]--;
 
 					Command_Callback(str, 10);
+
+					HAL_Delay(5);
 				}
 			}
 		}
